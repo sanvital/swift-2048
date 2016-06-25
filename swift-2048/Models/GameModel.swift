@@ -23,23 +23,22 @@ class GameModel : NSObject {
 
   var score : Int = 0 {
     didSet {
-      delegate.scoreChanged(score)
+      delegate?.scoreChanged(score)
     }
   }
   var gameboard: SquareGameboard<TileObject>
 
-  unowned let delegate : GameModelProtocol
-
+  weak var delegate: GameModelProtocol?
+  
   var queue: [MoveCommand]
   var timer: NSTimer
 
   let maxCommands = 100
   let queueDelay = 0.3
 
-  init(dimension d: Int, threshold t: Int, delegate: GameModelProtocol) {
+  init(dimension d: Int, threshold t: Int) {
     dimension = d
     threshold = t
-    self.delegate = delegate
     queue = [MoveCommand]()
     timer = NSTimer()
     gameboard = SquareGameboard(dimension: d, initialValue: .Empty)
@@ -105,7 +104,7 @@ class GameModel : NSObject {
     let (x, y) = position
     if case .Empty = gameboard[x, y] {
       gameboard[x, y] = TileObject.Tile(value)
-      delegate.insertTile(position, value: value)
+      delegate?.insertTile(position, value: value)
     }
   }
 
@@ -240,7 +239,7 @@ class GameModel : NSObject {
           }
           gameboard[sx, sy] = TileObject.Empty
           gameboard[dx, dy] = TileObject.Tile(v)
-          delegate.moveOneTile(coords[s], to: coords[d], value: v)
+          delegate?.moveOneTile(coords[s], to: coords[d], value: v)
         case let MoveOrder.DoubleMoveOrder(s1, s2, d, v):
           // Perform a simultaneous two-tile move
           let (s1x, s1y) = coords[s1]
@@ -250,7 +249,7 @@ class GameModel : NSObject {
           gameboard[s1x, s1y] = TileObject.Empty
           gameboard[s2x, s2y] = TileObject.Empty
           gameboard[dx, dy] = TileObject.Tile(v)
-          delegate.moveTwoTiles((coords[s1], coords[s2]), to: coords[d], value: v)
+          delegate?.moveTwoTiles((coords[s1], coords[s2]), to: coords[d], value: v)
         }
       }
     }
