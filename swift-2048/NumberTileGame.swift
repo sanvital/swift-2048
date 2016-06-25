@@ -8,19 +8,22 @@
 
 import UIKit
 
+///
 /// A view controller representing the swift-2048 game. It serves mostly to tie a GameModel and a GameboardView
 /// together. Data flow works as follows: user input reaches the view controller and is forwarded to the model. Move
 /// orders calculated by the model are returned to the view controller and forwarded to the gameboard view, which
 /// performs any animations to update its state.
-class NumberTileGameViewController : UIViewController, GameModelProtocol {
+///
+
+class NumberTileGameViewController: UIViewController {
   // How many tiles in both directions the gameboard contains
-  var dimension: Int
+  let dimension: Int
   // The value of the winning tile
-  var threshold: Int
+  let threshold: Int
 
+  let model: GameModel
+  
   var board: GameboardView?
-  var model: GameModel?
-
   var scoreView: ScoreViewProtocol?
 
   // Width of the gameboard
@@ -78,13 +81,12 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
   }
 
   func reset() {
-    assert(board != nil && model != nil)
+    assert(board != nil)
     let b = board!
-    let m = model!
     b.reset()
-    m.reset()
-    m.insertTileAtRandomLocation(2)
-    m.insertTileAtRandomLocation(2)
+    model.reset()
+    model.insertTileAtRandomLocation(2)
+    model.insertTileAtRandomLocation(2)
   }
 
   func setupGame() {
@@ -151,17 +153,13 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
     view.addSubview(scoreView)
     self.scoreView = scoreView
 
-    assert(model != nil)
-    let m = model!
-    m.insertTileAtRandomLocation(2)
-    m.insertTileAtRandomLocation(2)
+    model.insertTileAtRandomLocation(2)
+    model.insertTileAtRandomLocation(2)
   }
 
   // Misc
   func followUp() {
-    assert(model != nil)
-    let m = model!
-    let (userWon, _) = m.userHasWon()
+    let (userWon, _) = model.userHasWon()
     if userWon {
       // TODO: alert delegate we won
       let alertView = UIAlertView()
@@ -175,11 +173,10 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
 
     // Now, insert more tiles
     let randomVal = Int(arc4random_uniform(10))
-    m.insertTileAtRandomLocation(randomVal == 1 ? 4 : 2)
+    model.insertTileAtRandomLocation(randomVal == 1 ? 4 : 2)
 
     // At this point, the user may lose
-    if m.userHasLost() {
-      // TODO: alert delegate we lost
+    if model.userHasLost() {
       NSLog("You lost...")
       let alertView = UIAlertView()
       alertView.title = "Defeat"
@@ -192,9 +189,7 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
   // Commands
   @objc(up:)
   func upCommand(r: UIGestureRecognizer!) {
-    assert(model != nil)
-    let m = model!
-    m.queueMove(MoveDirection.Up,
+    model.queueMove(MoveDirection.Up,
       completion: { (changed: Bool) -> () in
         if changed {
           self.followUp()
@@ -204,9 +199,7 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
 
   @objc(down:)
   func downCommand(r: UIGestureRecognizer!) {
-    assert(model != nil)
-    let m = model!
-    m.queueMove(MoveDirection.Down,
+    model.queueMove(MoveDirection.Down,
       completion: { (changed: Bool) -> () in
         if changed {
           self.followUp()
@@ -216,9 +209,7 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
 
   @objc(left:)
   func leftCommand(r: UIGestureRecognizer!) {
-    assert(model != nil)
-    let m = model!
-    m.queueMove(MoveDirection.Left,
+    model.queueMove(MoveDirection.Left,
       completion: { (changed: Bool) -> () in
         if changed {
           self.followUp()
@@ -228,9 +219,7 @@ class NumberTileGameViewController : UIViewController, GameModelProtocol {
 
   @objc(right:)
   func rightCommand(r: UIGestureRecognizer!) {
-    assert(model != nil)
-    let m = model!
-    m.queueMove(MoveDirection.Right,
+    model.queueMove(MoveDirection.Right,
       completion: { (changed: Bool) -> () in
         if changed {
           self.followUp()
