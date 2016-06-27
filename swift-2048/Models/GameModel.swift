@@ -16,8 +16,30 @@ protocol GameModelProtocol : class {
   func insertTile(location: (Int, Int), value: Int)
 }
 
+enum DimensionalOption: Int {
+  // The raw integer value matches the index of the option in the UI (within a segmented control).
+  case GameDimension3x3 = 0
+  case GameDimension4x4
+  case GameDimension6x6
+  
+  // Maps the option to the model concept of dimension (i.e. number of tiles in both directions).
+  func dimension() -> Int {
+    switch self {
+    case .GameDimension3x3:
+      return 3
+    case .GameDimension4x4:
+      return 4
+    case .GameDimension6x6:
+      return 6
+    }
+  }
+}
+
 /// A class representing the game state and game logic for swift-2048. It is owned by a NumberTileGame view controller.
 class GameModel : NSObject {
+  static let minimalDimension = 2
+  static let minimalThreshold = 8
+  
   let dimension : Int
   let threshold : Int
 
@@ -37,8 +59,8 @@ class GameModel : NSObject {
   let queueDelay = 0.3
 
   init(dimension d: Int, threshold t: Int) {
-    dimension = d
-    threshold = t
+    dimension = d > GameModel.minimalDimension ? d : GameModel.minimalDimension
+    threshold = t > GameModel.minimalThreshold ? t : GameModel.minimalThreshold
     queue = [MoveCommand]()
     timer = NSTimer()
     gameboard = SquareGameboard(dimension: d, initialValue: .Empty)

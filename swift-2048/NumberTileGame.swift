@@ -16,13 +16,29 @@ import UIKit
 ///
 
 class NumberTileGameViewController: UIViewController {
-  // How many tiles in both directions the gameboard contains
-  let dimension: Int
-  // The value of the winning tile
-  let threshold: Int
-
-  let model: GameModel
+  // dimension: number of tiles in both directions
+  // threshold: value of the winning tile
+  var modelSpec: (dimension: Int, threshold: Int) {
+    // Made this a computed property to better organize the ownership of the model specification (i.e.
+    // this object owns the model, and the model owns the dimension/threshold properties).
+    get {
+      return (model.dimension, model.threshold)
+    }
+    // Creates a new model when the spec being set differs, thus, if the specs match then the existing
+    // model will persist (thus, consider calling reset if the spec isn't changing).
+    set {
+      if newValue.dimension != model.dimension || newValue.threshold != newValue.threshold {
+        model = GameModel(dimension: newValue.dimension, threshold: newValue.threshold)
+      }
+    }
+  }
+  private var model: GameModel! {
+    didSet {
+      model.delegate = self
+    }
+  }
   
+  @IBOutlet weak var dimensionControl: UISegmentedControl!
   weak var board: GameboardView!
   weak var scoreView: ScoreView!
 
@@ -38,18 +54,18 @@ class NumberTileGameViewController: UIViewController {
   // Amount that the vertical alignment of the component views should differ from if they were centered
   let verticalViewOffset: CGFloat = 0.0
 
-  init(dimension d: Int, threshold t: Int) {
-    dimension = d > 2 ? d : 2
-    threshold = t > 8 ? t : 8
-    model = GameModel(dimension: dimension, threshold: threshold)
+  init(dimension: Int, threshold: Int) {
     super.init(nibName: nil, bundle: nil)
-    model.delegate = self
-    view.backgroundColor = UIColor.whiteColor()
-    setupSwipeControls()
+    defer { // allows for the model didSet-observer to execute inside of init
+      model = GameModel(dimension: dimension, threshold: threshold)
+    }
   }
 
-  required init(coder aDecoder: NSCoder) {
-    fatalError("NSCoding not supported")
+  required init?(coder aDecoder: NSCoder) {
+    super.init(coder: aDecoder)
+    defer { // allows for the model didSet-observer to execute inside of init
+      model = GameModel(dimension: 4, threshold: 2048)
+    }
   }
 
   func setupSwipeControls() {
@@ -78,9 +94,25 @@ class NumberTileGameViewController: UIViewController {
   // View Controller
   override func viewDidLoad()  {
     super.viewDidLoad()
+    setupSwipeControls()
     setupGame()
   }
 
+  @IBAction func newGame() {
+    if let selectedOption = DimensionalOption(rawValue: dimensionControl.selectedSegmentIndex) where selectedOption.dimension() != modelSpec.dimension {
+      modelSpec = (selectedOption.dimension(), model.threshold)
+      // board and scoreView and are both weak IUO (implicitly unwrapped optional), thus, they are
+      // actually optional but can be (and usually are) treated as non-optional in the code.
+      // Removing them from the view hierarchy releases our ownership interest (maintained by our
+      // view.subviews property), which allows for a fresh call to setupGame
+      board.removeFromSuperview()
+      scoreView.removeFromSuperview()
+      setupGame()
+    } else {
+      reset()
+    }
+  }
+  
   func reset() {
     board.reset()
     model.reset()
@@ -122,10 +154,10 @@ class NumberTileGameViewController: UIViewController {
     scoreView.score = 0
 
     // Create the gameboard
-    let padding: CGFloat = dimension > 5 ? thinPadding : thickPadding
-    let v1 = boardWidth - padding*(CGFloat(dimension + 1))
-    let width: CGFloat = CGFloat(floorf(CFloat(v1)))/CGFloat(dimension)
-    let gameboard = GameboardView(dimension: dimension,
+    let padding: CGFloat = modelSpec.dimension > 5 ? thinPadding : thickPadding
+    let v1 = boardWidth - padding*(CGFloat(modelSpec.dimension + 1))
+    let width: CGFloat = CGFloat(floorf(CFloat(v1)))/CGFloat(modelSpec.dimension)
+    let gameboard = GameboardView(dimension: modelSpec.dimension,
       tileWidth: width,
       tilePadding: padding,
       cornerRadius: 6,
