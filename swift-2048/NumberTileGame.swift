@@ -23,8 +23,8 @@ class NumberTileGameViewController: UIViewController {
 
   let model: GameModel
   
-  var board: GameboardView?
-  var scoreView: ScoreViewProtocol?
+  weak var board: GameboardView!
+  weak var scoreView: ScoreView!
 
   // Width of the gameboard
   let boardWidth: CGFloat = 230.0
@@ -82,9 +82,7 @@ class NumberTileGameViewController: UIViewController {
   }
 
   func reset() {
-    assert(board != nil)
-    let b = board!
-    b.reset()
+    board.reset()
     model.reset()
     model.insertTileAtRandomLocation(2)
     model.insertTileAtRandomLocation(2)
@@ -227,31 +225,22 @@ class NumberTileGameViewController: UIViewController {
         }
       })
   }
+}
 
-  // Protocol
+extension NumberTileGameViewController: GameModelProtocol {
   func scoreChanged(score: Int) {
-    if scoreView == nil {
-      return
-    }
-    let s = scoreView!
-    s.scoreChanged(newScore: score)
+    scoreView.scoreChanged(newScore: score)
   }
 
   func moveOneTile(from: (Int, Int), to: (Int, Int), value: Int) {
-    assert(board != nil)
-    let b = board!
-    b.moveOneTile(from, to: to, value: value)
+    board.moveOneTile(from, to: to, value: value)
   }
 
   func moveTwoTiles(from: ((Int, Int), (Int, Int)), to: (Int, Int), value: Int) {
-    assert(board != nil)
-    let b = board!
-    b.moveTwoTiles(from, to: to, value: value)
+    board.moveTwoTiles(from, to: to, value: value)
   }
 
   func insertTile(location: (Int, Int), value: Int) {
-    assert(board != nil)
-    let b = board!
-    b.insertTile(location, value: value)
+    board.insertTile(location, value: value)
   }
 }
