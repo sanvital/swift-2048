@@ -91,6 +91,24 @@ class NumberTileGameViewController: UIViewController {
   }
 
 
+  @IBAction func shareGameState() {
+    UIGraphicsBeginImageContextWithOptions(view.bounds.size, false, UIScreen.mainScreen().scale)
+    if let context = UIGraphicsGetCurrentContext() {
+      CGContextSaveGState(context)
+      CGContextTranslateCTM(context, scoreView.frame.origin.x, scoreView.frame.origin.y)
+      scoreView.layer.renderInContext(context)
+      CGContextRestoreGState(context)
+      CGContextTranslateCTM(context, board.frame.origin.x, board.frame.origin.y)
+      board.layer.renderInContext(context)
+      
+      let gameScreenShot = UIGraphicsGetImageFromCurrentImageContext()
+      UIGraphicsEndImageContext();
+      
+      let shareGameVC = UIActivityViewController(activityItems: [gameScreenShot], applicationActivities: nil)
+      presentViewController(shareGameVC, animated: true, completion: nil)
+    }
+  }
+  
   // View Controller
   override func viewDidLoad()  {
     super.viewDidLoad()
